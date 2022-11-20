@@ -18,20 +18,20 @@ from requests.auth import HTTPDigestAuth
 import errno
 import paho.mqtt.client as mqtt 
 from json.decoder import JSONDecodeError
-from sensecam_control import vapix_control,vapix_config
+from sensecam_control import onvif_control,onvif_config
 import utils
 
 
 import logging
 import coloredlogs
-import logging.config # This gets rid of the annoying log messages from Vapix_Control
+import logging.config # This gets rid of the annoying log messages from onvif_control
 
 logging.config.dictConfig({
     'version': 1,
     'disable_existing_loggers': True,
 })
-logging.getLogger("vapix_control.py").setLevel(logging.WARNING)
-logging.getLogger("vapix_control").setLevel(logging.WARNING)
+logging.getLogger("onvif_control.py").setLevel(logging.WARNING)
+logging.getLogger("onvif_control").setLevel(logging.WARNING)
 logging.getLogger("sensecam_control").setLevel(logging.WARNING)
 
 ID = str(random.randint(1,100001))
@@ -221,8 +221,9 @@ def moveCamera(ip, username, password):
     movePeriod = 100  # milliseconds
     moveTimeout = datetime.now()
     captureTimeout = datetime.now()
-    camera = vapix_control.CameraControl(ip, username, password)
-    
+    camera = onvif_control.CameraControl(ip, username, password)
+    camera.camera_start()
+
     while True:
         if active:
             if not "icao24" in currentPlane:
@@ -230,7 +231,7 @@ def moveCamera(ip, username, password):
                 continue
             if moveTimeout <= datetime.now():
                 calculateCameraPosition()
-                camera.absolute_move(cameraPan, cameraTilt, cameraZoom, cameraMoveSpeed)
+                camera.absolute_move(cameraPan, cameraTilt, cameraZoom)
                 #logging.info("Moving to Pan: {} Tilt: {}".format(cameraPan, cameraTilt))
                 moveTimeout = moveTimeout + timedelta(milliseconds=movePeriod)
                 if moveTimeout <= datetime.now():
@@ -419,7 +420,7 @@ def main():
                                 '%(message)s')
 
     logging.info("---[ Starting %s ]---------------------------------------------" % sys.argv[0])
-    #camera = vapix_control.CameraControl(args.axis_ip, args.axis_username, args.axis_password)
+    #camera = onvif_control.CameraControl(args.axis_ip, args.axis_username, args.axis_password)
     cameraDelay = args.camera_delay
     cameraMoveSpeed = args.camera_move_speed
     cameraZoom = args.camera_zoom
@@ -427,7 +428,7 @@ def main():
     camera_latitude = args.lat
     camera_altitude = args.alt # Altitude is in METERS
     camera_lead = args.camera_lead
-    #cameraConfig = vapix_config.CameraConfiguration(args.axis_ip, args.axis_username, args.axis_password)
+    #cameraConfig = onvif_control.CameraConfiguration(args.axis_ip, args.axis_username, args.axis_password)
 
     cameraMove = threading.Thread(target=moveCamera, args=[args.axis_ip, args.axis_username, args.axis_password],daemon=True)
     cameraMove.start()
